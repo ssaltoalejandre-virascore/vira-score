@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="VIRA Score — Viremia-Integrated Risk Assessment for 30-day mortality in SARS-CoV-2 pneumonia. Free online clinical calculator.">
+<title>VIRA Score Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal-50: #E1F5EE; --teal-100: #9FE1CB; --teal-400: #1D9E75;
+    --teal-600: #0F6E56; --teal-800: #085041; --teal-900: #04342C;
+    --coral-50: #FAECE7; --coral-400: #D85A30; --coral-600: #993C1D;
+    --coral-800: #712B13; --coral-900: #4A1B0C;
+    --green-50: #EAF3DE; --green-600: #3B6D11; --green-800: #27500A;
+    --amber-50: #FAEEDA; --amber-600: #854F0B; --amber-800: #633806;
+    --red-50: #FCEBEB; --red-600: #A32D2D; --red-800: #791F1F;
+    --gray-50: #F1EFE8; --gray-100: #D3D1C7;
+    --text: #1a1a18; --text-sec: #5F5E5A; --text-ter: #888780;
+    --border: rgba(0,0,0,0.12); --border-sec: rgba(0,0,0,0.22);
+    --bg: #ffffff; --bg-sec: #F8F7F4; --bg-ter: #F1EFE8;
+    --radius: 10px; --radius-lg: 14px;
+    --font: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  }
+
+  body { font-family: var(--font); background: var(--bg-sec); color: var(--text); line-height: 1.6; }
+
+  nav { background: var(--bg); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { display: flex; align-items: baseline; gap: 8px; }
+  .nav-brand span:first-child { font-size: 20px; font-weight: 700; color: var(--teal-600); letter-spacing: -0.5px; }
+  .nav-brand span:last-child { font-size: 12px; color: var(--text-sec); }
+  .lang-toggle { display: flex; gap: 4px; }
+  .lang-btn { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border-sec); background: transparent; font-size: 13px; cursor: pointer; color: var(--text-sec); transition: all 0.15s; }
+  .lang-btn.active { background: var(--teal-400); border-color: var(--teal-400); color: white; }
+
+  .hero { background: var(--bg); border-bottom: 1px solid var(--border); padding: 3rem 2rem 2.5rem; text-align: center; }
+  .hero-badge { display: inline-block; background: var(--teal-50); color: var(--teal-800); font-size: 12px; font-weight: 600; padding: 4px 14px; border-radius: 20px; border: 1px solid var(--teal-100); margin-bottom: 1rem; letter-spacing: 0.04em; }
+  .hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 700; color: var(--text); letter-spacing: -1px; margin-bottom: 0.5rem; }
+  .hero h1 span { color: var(--teal-400); }
+  .hero-sub { font-size: 16px; color: var(--text-sec); max-width: 580px; margin: 0 auto 0.5rem; }
+  .hero-sub2 { font-size: 13px; color: var(--text-ter); }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  @media(max-width: 720px) { .main { grid-template-columns: 1fr; } }
+
+  .calc-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+  .calc-title { font-size: 15px; font-weight: 600; margin-bottom: 1rem; color: var(--text); }
+
+  .type-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .type-btn { padding: 10px; border-radius: var(--radius); border: 1.5px solid var(--border-sec); background: var(--bg); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; color: var(--text); }
+  .type-btn:hover { background: var(--bg-sec); }
+  .type-btn.active-ic { background: var(--teal-50); border-color: var(--teal-400); color: var(--teal-800); }
+  .type-btn.active-imc { background: var(--coral-50); border-color: var(--coral-400); color: var(--coral-900); }
+
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text-ter); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+
+  .var-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem; }
+  .var-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--bg); border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .var-row:last-child { border-bottom: none; }
+  .var-row.checked-ic { background: var(--teal-50); }
+  .var-row.checked-imc { background: var(--coral-50); }
+  .var-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .var-pts { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+  .var-pts.neg { color: var(--red-600); }
+
+  .switch { position: relative; width: 42px; height: 23px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .sw-track { position: absolute; inset: 0; background: var(--gray-100); border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+  .sw-track::before { content: ''; position: absolute; width: 17px; height: 17px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  input:checked + .sw-track { background: var(--teal-400); }
+  input:checked + .sw-track.imc { background: var(--coral-400); }
+  input:checked + .sw-track::before { transform: translateX(19px); }
+
+  .result-box { border-radius: var(--radius); padding: 1.25rem; border: 1.5px solid; }
+  .result-box.low { background: var(--green-50); border-color: var(--green-600); }
+  .result-box.moderate { background: var(--amber-50); border-color: var(--amber-600); }
+  .result-box.high { background: var(--coral-50); border-color: var(--coral-400); }
+  .result-box.veryhigh { background: var(--red-50); border-color: var(--red-600); }
+  .result-score { font-size: 32px; font-weight: 700; margin-bottom: 2px; }
+  .result-box.low .result-score { color: var(--green-800); }
+  .result-box.moderate .result-score { color: var(--amber-800); }
+  .result-box.high .result-score { color: var(--coral-800); }
+  .result-box.veryhigh .result-score { color: var(--red-800); }
+  .result-cat { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+  .result-box.low .result-cat { color: var(--green-800); }
+  .result-box.moderate .result-cat { color: var(--amber-800); }
+  .result-box.high .result-cat { color: var(--coral-800); }
+  .result-box.veryhigh .result-cat { color: var(--red-800); }
+  .result-divider { height: 1px; background: rgba(0,0,0,0.1); margin: 10px 0; }
+  .result-stat { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .result-stat-label { color: var(--text-sec); }
+  .result-stat-val { font-weight: 600; color: var(--text); }
+
+  .reset-btn { width: 100%; margin-top: 10px; padding: 9px; border-radius: var(--radius); border: 1px solid var(--border-sec); background: var(--bg); color: var(--text-sec); font-size: 13px; cursor: pointer; }
+  .reset-btn:hover { background: var(--bg-sec); }
+
+  .disclaimer-box { margin-top: 1rem; padding: 10px 12px; background: var(--bg-ter); border-radius: var(--radius); font-size: 11px; color: var(--text-sec); line-height: 1.5; }
+
+  .info-panel { display: flex; flex-direction: column; gap: 1.25rem; }
+  .info-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .info-card h2 { font-size: 15px; font-weight: 600; margin-bottom: 0.75rem; color: var(--text); }
+  .info-card p { font-size: 13px; color: var(--text-sec); line-height: 1.65; margin-bottom: 0.5rem; }
+  .info-card p:last-child { margin-bottom: 0; }
+
+  .score-formula { background: var(--bg-ter); border-radius: var(--radius); padding: 1rem; margin: 0.75rem 0; }
+  .formula-title { font-size: 11px; font-weight: 600; color: var(--text-ter); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .formula-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .formula-row:last-child { border-bottom: none; }
+  .formula-var { color: var(--text); }
+  .formula-pt { font-weight: 600; }
+  .formula-pt.pos { color: var(--teal-600); }
+  .formula-pt.neg { color: var(--red-600); }
+
+  .risk-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 0.75rem; }
+  .risk-table th { text-align: left; padding: 6px 8px; font-size: 11px; font-weight: 600; color: var(--text-ter); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  .risk-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text-sec); }
+  .risk-table tr:last-child td { border-bottom: none; }
+  .risk-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill-low { background: var(--green-50); color: var(--green-800); }
+  .pill-mod { background: var(--amber-50); color: var(--amber-800); }
+  .pill-high { background: var(--coral-50); color: var(--coral-800); }
+  .pill-vhigh { background: var(--red-50); color: var(--red-800); }
+
+  .authors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0.75rem; }
+  .author-card { background: var(--bg-ter); border-radius: var(--radius); padding: 10px 12px; }
+  .author-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .author-inst { font-size: 11px; color: var(--text-sec); margin-top: 2px; line-height: 1.4; }
+
+  footer { background: var(--bg); border-top: 1px solid var(--border); padding: 2rem 1.5rem; text-align: center; }
+  footer p { font-size: 12px; color: var(--text-ter); line-height: 1.8; }
+
+  .t { display: none; }
+  .t.active { display: block; }
+  span.t { display: none; }
+  span.t.active { display: inline; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <span>VIRA score</span>
+    <span>virascore.com</span>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="btn-es" onclick="setLang('es')">ES</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">
+    <span class="t en active">Clinical Risk Calculator</span>
+    <span class="t es">Calculadora de Riesgo Clínico</span>
+  </div>
+  <h1><span>VIRA</span> score</h1>
+  <p class="hero-sub t en active">Viremia-Integrated Risk Assessment for 30-day mortality in SARS-CoV-2 pneumonia</p>
+  <p class="hero-sub t es">Viremia-Integrated Risk Assessment para la mortalidad a 30 días en neumonía por SARS-CoV-2</p>
+  <p class="hero-sub2 t en active">Validated in immunocompetent and immunocompromised patients · Post-vaccine era cohort</p>
+  <p class="hero-sub2 t es">Validado en pacientes inmunocompetentes e inmunodeprimidos · Cohorte en era post-vacunal</p>
+</div>
+
+<div class="main">
+
+  <div class="calc-card">
+    <div class="calc-title t en active" id="lbl-assessment">Patient assessment</div>
+    <div class="calc-title t es" id="lbl-assessment-es">Evaluación del paciente</div>
+
+    <div class="section-label t en active">Patient type</div>
+    <div class="section-label t es">Tipo de paciente</div>
+    <div class="type-row">
+      <button class="type-btn active-ic" id="btn-ic" onclick="setType('ic')">
+        <span class="t en active">Immunocompetent</span>
+        <span class="t es">Inmunocompetente</span>
+      </button>
+      <button class="type-btn" id="btn-imc" onclick="setType('imc')">
+        <span class="t en active">Immunocompromised</span>
+        <span class="t es">Inmunodeprimido</span>
+      </button>
+    </div>
+
+    <div class="section-label t en active">Risk factors</div>
+    <div class="section-label t es">Factores de riesgo</div>
+    <div class="var-list" id="var-list"></div>
+
+    <div class="result-box low" id="result-box">
+      <div class="result-score" id="r-score">0 pts</div>
+      <div class="result-cat" id="r-cat"></div>
+      <div class="result-divider"></div>
+      <div class="result-stat">
+        <span class="result-stat-label t en active">Observed 30-day mortality</span>
+        <span class="result-stat-label t es">Mortalidad observada a 30 días</span>
+        <span class="result-stat-val" id="r-mort">—</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-label t en active">Sensitivity at this cut-off</span>
+        <span class="result-stat-label t es">Sensibilidad en este punto de corte</span>
+        <span class="result-stat-val" id="r-sen">—</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-label t en active">Negative predictive value</span>
+        <span class="result-stat-label t es">Valor predictivo negativo</span>
+        <span class="result-stat-val" id="r-npv">—</span>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">
+      <span class="t en active">Reset</span>
+      <span class="t es">Reiniciar</span>
+    </button>
+
+    <div class="disclaimer-box">
+      <span class="t en active">For research and educational use only. Does not replace clinical judgement. Based on internal validation; external validation pending.</span>
+      <span class="t es">Solo para uso educativo e investigación. No sustituye al juicio clínico. Basado en validación interna; pendiente de validación externa.</span>
+    </div>
+  </div>
+
+  <div class="info-panel">
+
+    <div class="info-card">
+      <h2 class="t en active">About the VIRA score</h2>
+      <h2 class="t es">Sobre el VIRA score</h2>
+      <p class="t en active">The VIRA score (Viremia-Integrated Risk Assessment) is a simplified clinical prediction model for 30-day all-cause mortality in patients with SARS-CoV-2 community-acquired pneumonia (CAP) evaluated at the hospital. It incorporates SARS-CoV-2 RNAemia — the detection of viral RNA in serum at the time of diagnosis — into the well-established CURB-65 framework, substantially improving its predictive accuracy, particularly in immunocompromised patients.</p>
+      <p class="t es">El VIRA score (Viremia-Integrated Risk Assessment) es un modelo simplificado de predicción clínica para la mortalidad por todas las causas a 30 días en pacientes atendidos en el hospital con neumonía adquirida en la comunidad (NAC) por SARS-CoV-2. Incorpora la ARNemia por SARS-CoV-2 —la detección de ARN viral en suero en el momento del diagnóstico— al marco del CURB-65, mejorando sustancialmente su capacidad predictiva, especialmente en pacientes inmunodeprimidos.</p>
+      <p class="t en active">The score was developed and internally validated in a multicentre Spanish cohort of 819 patients (539 immunocompetent, 280 immunocompromised) enrolled between January 2020 and May 2023, following TRIPOD recommendations.</p>
+      <p class="t es">El score fue desarrollado y validado internamente en una cohorte multicéntrica española de 819 pacientes (539 inmunocompetentes, 280 inmunodeprimidos) incluidos entre enero de 2020 y mayo de 2023, siguiendo las recomendaciones TRIPOD.</p>
+    </div>
+
+    <div class="info-card">
+      <h2 class="t en active">Score components</h2>
+      <h2 class="t es">Componentes del score</h2>
+
+      <div class="formula-title t en active">Immunocompetent patients (AUROC 0.806)</div>
+      <div class="formula-title t es">Pacientes inmunocompetentes (AUROC 0.806)</div>
+      <div class="score-formula">
+        <div class="formula-row"><span class="formula-var">CURB-65 ≥ 2</span><span class="formula-pt pos">+2 pts</span></div>
+        <div class="formula-row"><span class="formula-var">RNAemia</span><span class="formula-pt pos">+1 pt</span></div>
+      </div>
+
+      <div class="formula-title t en active" style="margin-top:12px">Immunocompromised patients (AUROC 0.745)</div>
+      <div class="formula-title t es" style="margin-top:12px">Pacientes inmunodeprimidos (AUROC 0.745)</div>
+      <div class="score-formula">
+        <div class="formula-row"><span class="formula-var">RNAemia</span><span class="formula-pt pos">+1 pt</span></div>
+        <div class="formula-row"><span class="formula-var">CURB-65 ≥ 2</span><span class="formula-pt pos">+1 pt</span></div>
+        <div class="formula-row"><span class="formula-var t en active">Dyspnoea</span><span class="formula-var t es">Disnea</span><span class="formula-pt pos">+1 pt</span></div>
+        <div class="formula-row"><span class="formula-var t en active">Male sex</span><span class="formula-var t es">Sexo masculino</span><span class="formula-pt neg">−1 pt</span></div>
+      </div>
+
+      <div class="formula-title t en active" style="margin-top:12px">Risk categories — immunocompetent</div>
+      <div class="formula-title t es" style="margin-top:12px">Categorías de riesgo — inmunocompetentes</div>
+      <table class="risk-table">
+        <tr>
+          <th><span class="t en active">Score</span><span class="t es">Puntuación</span></th>
+          <th><span class="t en active">Category</span><span class="t es">Categoría</span></th>
+          <th><span class="t en active">Mortality</span><span class="t es">Mortalidad</span></th>
+        </tr>
+        <tr><td>0</td><td><span class="risk-pill pill-low t en active">Low</span><span class="risk-pill pill-low t es">Baja</span></td><td>1.4%</td></tr>
+        <tr><td>1</td><td><span class="risk-pill pill-mod t en active">Moderate</span><span class="risk-pill pill-mod t es">Moderada</span></td><td>3.6%</td></tr>
+        <tr><td>2</td><td><span class="risk-pill pill-high t en active">High</span><span class="risk-pill pill-high t es">Alta</span></td><td>12.9%</td></tr>
+        <tr><td>3</td><td><span class="risk-pill pill-vhigh t en active">Very high</span><span class="risk-pill pill-vhigh t es">Muy alta</span></td><td>28.6%</td></tr>
+      </table>
+
+      <div class="formula-title t en active" style="margin-top:12px">Risk categories — immunocompromised</div>
+      <div class="formula-title t es" style="margin-top:12px">Categorías de riesgo — inmunodeprimidos</div>
+      <table class="risk-table">
+        <tr>
+          <th><span class="t en active">Score</span><span class="t es">Puntuación</span></th>
+          <th><span class="t en active">Category</span><span class="t es">Categoría</span></th>
+          <th><span class="t en active">Mortality</span><span class="t es">Mortalidad</span></th>
+        </tr>
+        <tr><td>−1 to 1</td><td><span class="risk-pill pill-mod t en active">Moderate</span><span class="risk-pill pill-mod t es">Moderada</span></td><td>7.4–8.9%</td></tr>
+        <tr><td>2</td><td><span class="risk-pill pill-high t en active">High</span><span class="risk-pill pill-high t es">Alta</span></td><td>35.0%</td></tr>
+        <tr><td>3</td><td><span class="risk-pill pill-vhigh t en active">Very high</span><span class="risk-pill pill-vhigh t es">Muy alta</span></td><td>77.8%</td></tr>
+      </table>
+    </div>
+
+    <div class="info-card">
+      <h2 class="t en active">Authors</h2>
+      <h2 class="t es">Autores</h2>
+      <div class="authors-grid">
+        <div class="author-card">
+          <div class="author-name">Sonsoles Salto-Alejandre</div>
+          <div class="author-inst">Hospital Virgen del Rocío · IBiS · CIBERINFEC, Sevilla</div>
+        </div>
+        <div class="author-card">
+          <div class="author-name">Jerónimo Pachón</div>
+          <div class="author-inst">IBiS · Hospital Virgen del Rocío · Universidad de Sevilla</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-ter);margin-top:10px" class="t en active">On behalf of all co-authors of the VIRA score study group.</p>
+      <p style="font-size:12px;color:var(--text-ter);margin-top:10px" class="t es">En nombre de todos los coautores del grupo de estudio VIRA score.</p>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>
+    <strong>virascore.com</strong> · VIRA score · Viremia-Integrated Risk Assessment<br>
+    <span class="t en active">For research and educational purposes only. Not for direct clinical decision-making without professional judgement.</span>
+    <span class="t es">Solo para fines educativos y de investigación. No apto para la toma de decisiones clínicas sin juicio profesional.</span><br>
+    <span style="color:var(--text-ter);font-size:11px">© 2026 Salto-Alejandre S, Pachón J et al.</span>
+  </p>
+</footer>
+
+<script>
+const IC_VARS = [
+  {id:'curb', name_en:'CURB-65 ≥ 2',                              name_es:'CURB-65 ≥ 2',                              pts_en:'+2 points', pts_es:'+2 puntos', pts:2},
+  {id:'rna',  name_en:'RNAemia (SARS-CoV-2 RNA detected in serum)', name_es:'ARNemia (ARN de SARS-CoV-2 en suero)',   pts_en:'+1 point',  pts_es:'+1 punto',  pts:1},
+];
+const IMC_VARS = [
+  {id:'rna',  name_en:'RNAemia (SARS-CoV-2 RNA detected in serum)', name_es:'ARNemia (ARN de SARS-CoV-2 en suero)',   pts_en:'+1 point',  pts_es:'+1 punto',  pts:1},
+  {id:'curb', name_en:'CURB-65 ≥ 2',                              name_es:'CURB-65 ≥ 2',                              pts_en:'+1 point',  pts_es:'+1 punto',  pts:1},
+  {id:'dysp', name_en:'Dyspnoea',                                  name_es:'Disnea',                                   pts_en:'+1 point',  pts_es:'+1 punto',  pts:1},
+  {id:'male', name_en:'Male sex',                                  name_es:'Sexo masculino',                           pts_en:'−1 point',  pts_es:'−1 punto',  pts:-1},
+];
+const IC_RISK = [
+  {min:0,   max:0,  cat_en:'Low risk',       cat_es:'Riesgo bajo',     cls:'low',      mort:'1.4%',     sen:'—',     npv:'—'},
+  {min:1,   max:1,  cat_en:'Moderate risk',  cat_es:'Riesgo moderado', cls:'moderate', mort:'3.6%',     sen:'81.8%', npv:'98.6%'},
+  {min:2,   max:2,  cat_en:'High risk',      cat_es:'Riesgo alto',     cls:'high',     mort:'12.9%',    sen:'72.7%', npv:'98.2%'},
+  {min:3,   max:99, cat_en:'Very high risk', cat_es:'Riesgo muy alto', cls:'veryhigh', mort:'28.6%',    sen:'36.4%', npv:'96.5%'},
+];
+const IMC_RISK = [
+  {min:-99, max:1,  cat_en:'Moderate risk',  cat_es:'Riesgo moderado', cls:'moderate', mort:'7.4–8.9%', sen:'80.0%', npv:'92.6%'},
+  {min:2,   max:2,  cat_en:'High risk',      cat_es:'Riesgo alto',     cls:'high',     mort:'35.0%',    sen:'60.0%', npv:'91.9%'},
+  {min:3,   max:99, cat_en:'Very high risk', cat_es:'Riesgo muy alto', cls:'veryhigh', mort:'77.8%',    sen:'20.0%', npv:'86.9%'},
+];
+
+let type = 'ic';
+let checks = {};
+let lang = 'en';
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.getElementById('btn-es').classList.toggle('active', l === 'es');
+  document.querySelectorAll('.t.en').forEach(el => el.classList.toggle('active', l === 'en'));
+  document.querySelectorAll('.t.es').forEach(el => el.classList.toggle('active', l === 'es'));
+  renderVars();
+  updateResult();
+}
+
+function setType(t) {
+  type = t;
+  checks = {};
+  document.getElementById('btn-ic').className = 'type-btn' + (t==='ic' ? ' active-ic' : '');
+  document.getElementById('btn-imc').className = 'type-btn' + (t==='imc' ? ' active-imc' : '');
+  renderVars();
+  updateResult();
+}
+
+function renderVars() {
+  const vars = type === 'ic' ? IC_VARS : IMC_VARS;
+  const isImc = type === 'imc';
+  const list = document.getElementById('var-list');
+  list.innerHTML = '';
+  vars.forEach(v => {
+    const on = !!checks[v.id];
+    const neg = v.pts < 0;
+    const name = lang === 'es' ? v.name_es : v.name_en;
+    const pts  = lang === 'es' ? v.pts_es  : v.pts_en;
+    const d = document.createElement('div');
+    d.className = 'var-row' + (on ? (isImc ? ' checked-imc' : ' checked-ic') : '');
+    d.id = 'row-' + v.id;
+    d.innerHTML = `
+      <div>
+        <div class="var-name">${name}</div>
+        <div class="var-pts${neg?' neg':''}">${pts}</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${on?'checked':''} onchange="toggle('${v.id}')">
+        <span class="sw-track${isImc?' imc':''}"></span>
+      </label>`;
+    list.appendChild(d);
+  });
+}
+
+function toggle(id) {
+  const el = document.querySelector('#row-' + id + ' input');
+  checks[id] = el.checked;
+  const row = document.getElementById('row-' + id);
+  row.className = 'var-row' + (el.checked ? (type==='imc' ? ' checked-imc' : ' checked-ic') : '');
+  updateResult();
+}
+
+function calcScore() {
+  const vars = type === 'ic' ? IC_VARS : IMC_VARS;
+  return vars.reduce((s, v) => s + (checks[v.id] ? v.pts : 0), 0);
+}
+
+function getRisk(score) {
+  const table = type === 'ic' ? IC_RISK : IMC_RISK;
+  return table.find(r => score >= r.min && score <= r.max) || table[0];
+}
+
+function updateResult() {
+  const score = calcScore();
+  const risk = getRisk(score);
+  document.getElementById('result-box').className = 'result-box ' + risk.cls;
+  document.getElementById('r-score').textContent = score + ' pt' + (Math.abs(score) === 1 ? '' : 's');
+  document.getElementById('r-cat').textContent = lang === 'es' ? risk.cat_es : risk.cat_en;
+  document.getElementById('r-mort').textContent = risk.mort;
+  document.getElementById('r-sen').textContent = risk.sen;
+  document.getElementById('r-npv').textContent = risk.npv;
+}
+
+function resetAll() {
+  checks = {};
+  renderVars();
+  updateResult();
+}
+
+renderVars();
+updateResult();
+</script>
+</body>
+</html>
